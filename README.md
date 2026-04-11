@@ -1,4 +1,4 @@
-## mina ssh
+## Mina Address CLI
 
 `mina` is lightweight IPv6 to IPv4 `ssh` CLI tool - created by MinaVPS (https://minavps.com) <br/>
 It is the official client tool for **Mina Address**, designed to simplify ssh to IPv6 server.
