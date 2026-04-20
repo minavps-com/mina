@@ -33,6 +33,48 @@ mina user@12.10.192.5
 # connected to server
 ```
 
+## Usage
+
+```
+mina command [command options] [arguments...]
+```
+
+### Commands
+
+- `mina login` - Authenticate with Minavps service (interactive or `--auth-code`)
+- `mina logout` - Remove authentication token
+- `mina add <ipv6> [--pro]` - Add an IPv6 address (optional `--pro`)
+- `mina delete <mina-address>` - Delete an IP address
+- `mina subscribe [plan]` - Subscribe to service plans
+- `mina list` - List IPv6 entries
+- `mina status` - Show authentication status and configuration
+- `mina version` - Show CLI version
+
+### Examples
+
+```bash
+# Login (will open browser)
+mina login
+
+# Login with code (non‑interactive)
+mina login --auth-code ABC-D12
+
+# Add IPv6 address
+mina add 2001:db8::1
+
+# Add IPv6 address as pro
+mina add 2001:db8::2 --pro
+
+# List entries
+mina list
+
+# Delete entry
+mina delete 12.10.192.5
+
+# Check status
+mina status
+```
+
 ## License
 
 - **Installer Script (`install.sh`):** Licensed under [Apache License 2.0](LICENSE).
