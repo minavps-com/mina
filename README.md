@@ -18,13 +18,19 @@ Installs the latest binary to `~/.local/bin` (or `/usr/local/bin`).
 Add your IPv6 server:
 ```bash
 mina add 2001:db8:85a3:0000:0000:8a2e:0370:7334
-# generates Mina Address: 12.10.192.5
+
+# ✅ Mina Address generated!
+# IPv6 address:  2001:4860:85a3:0000:0000:8a2e:0370:7334
+# Mina Address:  12.10.192.5 (🔹 Free)
 ```
 
 SSH using Mina Address:
 ```bash
 mina user@12.10.192.5
-# connects to the IPv6 server
+
+# 12.10.192.5 --> 2001:4860:85a3:0000:0000:8a2e:0370:7334
+# ssh user@2001:4860:85a3:0000:0000:8a2e:0370:7334
+# connected to server
 ```
 
 ## License
