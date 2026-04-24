@@ -70,6 +70,117 @@ detect_platform() {
     echo "${os}-${arch}"
 }
 
+# Detect the user's shell config file
+detect_shell_config() {
+    local platform="$1"
+    local config_file=""
+
+    # On Windows (Git Bash/MSYS2), use .bash_profile
+    if [[ "$platform" == "windows"* ]]; then
+        if [[ -f "${HOME}/.bash_profile" ]]; then
+            config_file="${HOME}/.bash_profile"
+        elif [[ -f "${HOME}/.bashrc" ]]; then
+            config_file="${HOME}/.bashrc"
+        else
+            config_file="${HOME}/.bash_profile"
+        fi
+        echo "$config_file"
+        return
+    fi
+
+    # Detect shell from SHELL env var
+    local shell_name
+    shell_name=$(basename "${SHELL:-/bin/bash}")
+
+    case "$shell_name" in
+        zsh)
+            # Zsh: prefer .zshrc, then .zshenv, then .zprofile
+            if [[ -f "${HOME}/.zshrc" ]]; then
+                config_file="${HOME}/.zshrc"
+            elif [[ -f "${HOME}/.zshenv" ]]; then
+                config_file="${HOME}/.zshenv"
+            elif [[ -f "${HOME}/.zprofile" ]]; then
+                config_file="${HOME}/.zprofile"
+            else
+                config_file="${HOME}/.zshrc"
+            fi
+            ;;
+        bash)
+            # Bash: prefer .bashrc, then .bash_profile, then .profile
+            if [[ "$platform" == "darwin"* ]]; then
+                # On macOS, bash login shells read .bash_profile, not .bashrc
+                if [[ -f "${HOME}/.bash_profile" ]]; then
+                    config_file="${HOME}/.bash_profile"
+                elif [[ -f "${HOME}/.bashrc" ]]; then
+                    config_file="${HOME}/.bashrc"
+                elif [[ -f "${HOME}/.profile" ]]; then
+                    config_file="${HOME}/.profile"
+                else
+                    config_file="${HOME}/.bash_profile"
+                fi
+            else
+                # On Linux, .bashrc is typically the right choice
+                if [[ -f "${HOME}/.bashrc" ]]; then
+                    config_file="${HOME}/.bashrc"
+                elif [[ -f "${HOME}/.bash_profile" ]]; then
+                    config_file="${HOME}/.bash_profile"
+                elif [[ -f "${HOME}/.profile" ]]; then
+                    config_file="${HOME}/.profile"
+                else
+                    config_file="${HOME}/.bashrc"
+                fi
+            fi
+            ;;
+        *)
+            # Fallback: try common config files
+            for candidate in ".profile" ".bashrc" ".bash_profile" ".zshrc"; do
+                if [[ -f "${HOME}/${candidate}" ]]; then
+                    config_file="${HOME}/${candidate}"
+                    break
+                fi
+            done
+            # If none exist, default to .profile
+            if [[ -z "$config_file" ]]; then
+                config_file="${HOME}/.profile"
+            fi
+            ;;
+    esac
+
+    echo "$config_file"
+}
+
+# Add install directory to PATH in shell config
+add_to_path() {
+    local platform="$1"
+    local config_file
+    config_file=$(detect_shell_config "$platform")
+    local export_line="export PATH=\"${INSTALL_DIR}:\$PATH\""
+    local marker="# Added by mina CLI installer"
+
+    # Check if already in PATH
+    if [[ ":$PATH:" == *":${INSTALL_DIR}:"* ]]; then
+        return 0
+    fi
+
+    # Check if the line already exists in the config file
+    if [[ -f "$config_file" ]] && grep -qF "$export_line" "$config_file" 2>/dev/null; then
+        log_success "${INSTALL_DIR} is already configured in ${config_file}"
+        return 0
+    fi
+
+    # Add to config file
+    log_info "Adding ${INSTALL_DIR} to PATH in ${config_file}..."
+    
+    {
+        echo ""
+        echo "$marker"
+        echo "$export_line"
+    } >> "$config_file"
+
+    log_success "Added ${INSTALL_DIR} to PATH in ${config_file}"
+    log_info "Restart your terminal or run: source ${config_file}"
+}
+
 # Get latest version from GitHub API (optional)
 get_latest_version() {
     # This can be enhanced to fetch latest version from GitHub releases
@@ -228,12 +339,8 @@ main() {
     
     log_success "Installed Mina CLI to ${final_path}"
     
-    # Check if install directory is in PATH
-    if [[ ":$PATH:" != *":${INSTALL_DIR}:"* ]]; then
-        log_warning "${INSTALL_DIR} is not in your PATH."
-        echo "Add the following to your shell profile:"
-        echo "  export PATH=\"${INSTALL_DIR}:\$PATH\""
-    fi
+    # Add to PATH in shell config
+    add_to_path "$platform"
     
     # Test installation
     if [[ -x "$final_path" ]]; then
