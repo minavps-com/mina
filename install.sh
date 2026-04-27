@@ -222,9 +222,9 @@ download_binary() {
     
     # Try curl first, then wget
     if command -v curl >/dev/null 2>&1; then
-        curl -fsSL "$url" -o "$dest"
+        curl -fL --progress-bar "$url" -o "$dest"
     elif command -v wget >/dev/null 2>&1; then
-        wget -q "$url" -O "$dest"
+        wget "$url" -O "$dest"
     else
         log_error "Neither curl nor wget found. Please install one of them."
         exit 1
